@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Teacher Profile</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+
+<body>
+    <div class="sec" style="max-width:850px;margin-top:40px">
+        <div class="av" id="av"></div>
+        <h2 id="tn" style="text-align:center;color:var(--acc)"></h2>
+        <h3 id="ts" style="text-align:center"></h3><br>
+        <div class="tw">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Class</th>
+                        <th>Time</th>
+                        <th>Period</th>
+                    </tr>
+                </thead>
+                <tbody id="tb"></tbody>
+            </table>
+        </div><br>
+        <a class="btn" href="index.html#faculty">← Back to Faculty</a>
+    </div>
+    <script src="data.js"></script>
+    <script>
+        const p = new URLSearchParams(location.search), name = (p.get('name') || '').trim(), f = FACULTY.find(x => x[0].toLowerCase() === name.toLowerCase());
+        document.getElementById('tn').textContent = f ? f[0] : 'Teacher not found'; document.getElementById('ts').textContent = f ? f[1] : '';
+        document.getElementById('av').textContent = f ? f[0].split(' ')[1][0] : '?';
+        document.getElementById('tb').innerHTML = f ? DAYS.map((d, i) => `<tr><td class="d">${d}</td><td>XI-${f[2][i]}</td><td>${PERIODS[i][1]}</td><td>${PERIODS[i][0]}</td></tr>`).join('') : '<tr><td colspan="4">No timetable available for this teacher.</td></tr>';
+    </script>
+</body>
+
+</html>

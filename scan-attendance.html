@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mark Attendance</title><link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script></head>
+<body style="display:grid;place-items:center;min-height:100vh;padding:16px"><div class="sec box" style="margin:0;width:100%">
+<div style="font-size:42px">🎓</div><h2>Student Attendance</h2><p id="msg" style="color:var(--teal);margin-bottom:14px;white-space:pre-line">Validating QR Code...</p>
+<div id="form" class="hid"><input id="n" placeholder="Enter Your Name"><input id="r" placeholder="Enter Roll Number (e.g., 1024)"><button class="green" id="go" style="width:100%">Confirm Present</button></div></div>
+<script src="data.js"></script><script>
+const $=i=>document.getElementById(i),q=new URLSearchParams(location.search),S=q.get('session'),T=q.get('token');
+const fail=m=>{$('msg').textContent=m;$('msg').style.color='#ef4444';$('form').classList.add('hid')};
+if(!S||!T)fail('❌ Invalid QR Code! Please scan a new QR code.');
+else db.ref('attendance_sessions/'+S).once('value').then(s=>{const v=s.val();
+ if(!v)return fail('❌ Session not found or has ended!');
+ if(v.status==='CLOSED')return fail('❌ This attendance session has ended!');
+ if(T!==v.token&&T!==v.prevToken)return fail('❌ QR Code expired. Scan the latest QR code.');
+ $('msg').textContent=`✅ Class: ${v.class} (Attendance Open)`;
+ return todayKey().then(day=>db.ref(`attendance_devices/${day}/${getVid()}`).once('value')).then(m=>{if(m.exists())fail(BLOCKED_MSG);else $('form').classList.remove('hid')})}).catch(()=>fail('Connection error. Try again.'));
+$('go').onclick=async()=>{const n=$('n').value.trim(),r=$('r').value.trim().toUpperCase().replace(/[.#$\[\]\/]/g,'');if(!n||!r)return alert('Please fill in both name and roll number.');
+ const ref=db.ref(`attendance_logs/${S}/${r}`);$('go').disabled=true;let day=null;
+ try{if((await ref.once('value')).exists()){$('go').disabled=false;return alert('❌ Attendance already marked for Roll No: '+r)}
+ const c=await claimToday({via:'qr',roll:r,name:n});day=c.day;
+ if(!c.ok)return fail(BLOCKED_MSG);
+ await ref.set({name:n,rollNo:r,time:new Date().toLocaleTimeString()});
+ $('form').innerHTML=`<h3 style="color:#10b981">🎉 Attendance Marked Successfully!</h3><p>${esc(n)} (${esc(r)})</p>`;$('msg').textContent=''}
+ catch(e){if(day)await releaseToday(day);$('go').disabled=false;alert('Error: '+e.message)}};
+</script></body></html>
